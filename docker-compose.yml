@@ -1,0 +1,55 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-budget}
+      POSTGRES_USER: ${POSTGRES_USER:-budget}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-budget}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-budget} -d ${POSTGRES_DB:-budget}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/002-seed.sql:ro
+
+  backup:
+    image: postgres:16-bookworm
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-budget}
+    entrypoint: ["/bin/sh", "-lc"]
+    command: >
+      while true; do
+        ts=$$(date +%Y%m%d-%H%M%S);
+        mkdir -p /backups;
+        pg_dump -h db -U ${POSTGRES_USER:-budget} -d ${POSTGRES_DB:-budget} > /backups/budget-$$ts.sql;
+        find /backups -type f -mtime +14 -delete;
+        sleep 86400;
+      done
+    restart: unless-stopped
+    volumes:
+      - ./db/backups:/backups
+
+volumes:
+  postgres_data:
