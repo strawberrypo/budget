@@ -97,3 +97,8 @@ export const reconciliationSchema = z.object({
   applyAdjustment: z.enum(["yes", "no"]).default("no"),
   memo: z.string().trim().max(200).optional().or(z.literal("")),
 });
+
+export const csvImportSchema = z.object({
+  csvText: z.string().min(1),
+  originalFilename: z.string().trim().min(1).max(200),
+});

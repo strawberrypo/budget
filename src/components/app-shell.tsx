@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { href: "/transactions", label: "Transactions" },
   { href: "/transfers", label: "Transfers" },
   { href: "/reconciliation", label: "Reconciliation" },
+  { href: "/imports", label: "Imports" },
 ];
 
 export function AppShell(props: AppShellProps) {

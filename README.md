@@ -48,8 +48,27 @@ This repository now includes:
 - account, category, assignment, and transaction workflows
 - edit/void correction flows for existing records
 - transfer and reconciliation workflows
-- a small automated test suite for core ledger rules
+- CSV import preview and staging
+- automated unit tests for core ledger rules
+- Postgres-backed integration tests for key workflows
 
-Known UX rough edge:
+## Testing
 
-- same-currency transfers correctly reject mismatched source/destination amounts, but the UI currently surfaces that as a simple error redirect rather than inline form validation.
+- Fast unit tests:
+
+```bash
+npm run test
+```
+
+- Postgres-backed integration tests:
+
+```bash
+npm run test:integration
+```
+
+The integration tests use `DATABASE_URL` from `.env` unless `TEST_DATABASE_URL` is set.
+
+## Known Gaps
+
+- CSV import currently stops at preview/staging. Column mapping, validation rules, and commit-to-ledger are not implemented yet.
+- Cross-currency transfers are supported structurally, but fee handling and richer UX are still pending.

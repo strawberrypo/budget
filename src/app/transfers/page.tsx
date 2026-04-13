@@ -1,5 +1,6 @@
 import { createTransfer } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
+import { TransferForm } from "@/components/transfer-form";
 import { requireBudgetAccess } from "@/lib/budget";
 import { db } from "@/lib/db";
 import { formatSignedMoney } from "@/lib/format";
@@ -90,72 +91,14 @@ export default async function TransfersPage({
               {resolvedSearchParams.error}
             </div>
           ) : null}
-          <form action={createTransfer} className="mt-6 space-y-4">
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-ink">Source account</span>
-              <select name="sourceAccountId" className="w-full rounded-2xl border border-ink/15 bg-paper px-4 py-3 outline-none focus:border-moss">
-                {accountsResult.rows.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.name} ({account.currency_code})
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-ink">Destination account</span>
-              <select name="destinationAccountId" className="w-full rounded-2xl border border-ink/15 bg-paper px-4 py-3 outline-none focus:border-moss">
-                {accountsResult.rows.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.name} ({account.currency_code})
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-ink">Transfer date</span>
-              <input
-                required
-                type="date"
-                name="transferDate"
-                defaultValue={today}
-                className="w-full rounded-2xl border border-ink/15 bg-paper px-4 py-3 outline-none focus:border-moss"
-              />
-            </label>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-ink">Source amount</span>
-                <input
-                  required
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  name="sourceAmount"
-                  className="w-full rounded-2xl border border-ink/15 bg-paper px-4 py-3 outline-none focus:border-moss"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-ink">Destination amount</span>
-                <input
-                  required
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  name="destinationAmount"
-                  className="w-full rounded-2xl border border-ink/15 bg-paper px-4 py-3 outline-none focus:border-moss"
-                />
-              </label>
-            </div>
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-ink">Memo</span>
-              <input
-                name="memo"
-                className="w-full rounded-2xl border border-ink/15 bg-paper px-4 py-3 outline-none focus:border-moss"
-              />
-            </label>
-            <button type="submit" className="w-full rounded-full bg-ink px-5 py-3 text-sm font-medium text-paper transition hover:bg-moss">
-              Save transfer
-            </button>
-          </form>
+          <TransferForm
+            accounts={accountsResult.rows.map((account) => ({
+              id: account.id,
+              name: account.name,
+              currencyCode: account.currency_code,
+            }))}
+            defaultDate={today}
+          />
         </section>
 
         <section className="rounded-[2rem] border border-ink/10 bg-white/75 p-6 shadow-sm">

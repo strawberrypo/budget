@@ -73,3 +73,33 @@ Environment:
   - import pipeline
   - backup/restore behavior
   - deployment on the actual home server target
+
+## 2026-04-12 Automated Integration Test Pass
+
+Environment:
+- Local PostgreSQL database running in Docker
+- Node test runner with `tsx`
+- Integration harness using isolated PostgreSQL schemas
+
+### Verified automated workflows
+
+1. Bootstrap workflow
+- Bootstrapping creates one owner user, one budget, and one membership.
+
+2. Core budgeting workflow
+- Account creation persists correctly.
+- Category group and category bucket creation persist correctly.
+- Budget assignment events persist correctly.
+- Categorized expense transactions create both ledger rows and matching splits.
+- Derived account balance math is correct for the tested scenario.
+
+3. Transfer invariants
+- Same-currency transfers with mismatched source and destination amounts are rejected.
+
+4. Reconciliation workflow
+- Reconciliation with explicit adjustment creates both a `reconciliation_event` and an adjustment transaction.
+
+### Notes
+
+- Integration coverage currently targets the extracted workflow layer and real PostgreSQL writes.
+- Browser/UI behavior is still primarily covered by manual testing.

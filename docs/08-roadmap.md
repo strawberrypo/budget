@@ -21,6 +21,19 @@
 - YNAB CSV support
 - preview + mapping interface
 
+### Current implementation status
+
+- Phase 1 is complete in the repository baseline.
+- Phase 2 is partially complete:
+  - transaction entry
+  - category assignment
+  - transfers
+  - reconciliation
+  - shared multi-user access for one budget
+- Phase 3 has started:
+  - CSV preview and staging exist
+  - mapping and commit are still pending
+
 ### Phase 4: Reporting and reliability
 
 - summary dashboard
@@ -36,4 +49,3 @@
 - consider desktop/mobile wrappers
 
 ---
-

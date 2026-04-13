@@ -1,5 +1,6 @@
 import { reconcileAccount } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
+import { ReconciliationForm } from "@/components/reconciliation-form";
 import { requireBudgetAccess } from "@/lib/budget";
 import { db } from "@/lib/db";
 import { formatMoney, formatSignedMoney } from "@/lib/format";
@@ -88,59 +89,15 @@ export default async function ReconciliationPage({
               {resolvedSearchParams.error}
             </div>
           ) : null}
-          <form action={reconcileAccount} className="mt-6 space-y-4">
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-ink">Account</span>
-              <select name="accountId" className="w-full rounded-2xl border border-ink/15 bg-paper px-4 py-3 outline-none focus:border-moss">
-                {accountsResult.rows.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.name} ({account.currency_code}) · Current {formatMoney(account.computed_balance, account.currency_code)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-ink">Statement date</span>
-              <input
-                required
-                type="date"
-                name="statementDate"
-                defaultValue={today}
-                className="w-full rounded-2xl border border-ink/15 bg-paper px-4 py-3 outline-none focus:border-moss"
-              />
-            </label>
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-ink">Statement balance</span>
-              <input
-                required
-                type="number"
-                step="0.01"
-                name="statementBalance"
-                className="w-full rounded-2xl border border-ink/15 bg-paper px-4 py-3 outline-none focus:border-moss"
-              />
-            </label>
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-ink">If mismatched</span>
-              <select
-                name="applyAdjustment"
-                defaultValue="no"
-                className="w-full rounded-2xl border border-ink/15 bg-paper px-4 py-3 outline-none focus:border-moss"
-              >
-                <option value="no">Record review only</option>
-                <option value="yes">Create explicit adjustment</option>
-              </select>
-            </label>
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-ink">Notes</span>
-              <input
-                name="memo"
-                className="w-full rounded-2xl border border-ink/15 bg-paper px-4 py-3 outline-none focus:border-moss"
-              />
-            </label>
-            <button type="submit" className="w-full rounded-full bg-ink px-5 py-3 text-sm font-medium text-paper transition hover:bg-moss">
-              Save reconciliation
-            </button>
-          </form>
+          <ReconciliationForm
+            accounts={accountsResult.rows.map((account) => ({
+              id: account.id,
+              name: account.name,
+              currencyCode: account.currency_code,
+              computedBalance: account.computed_balance,
+            }))}
+            defaultDate={today}
+          />
         </section>
 
         <section className="rounded-[2rem] border border-ink/10 bg-white/75 p-6 shadow-sm">
