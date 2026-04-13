@@ -1,6 +1,10 @@
 import Link from "next/link";
-import { getCurrentSession } from "@/lib/auth";
+import { AppShell } from "@/components/app-shell";
+import { requireBudgetAccess } from "@/lib/budget";
 import { getDashboardSnapshot } from "@/lib/dashboard";
+import { formatMoney, formatSignedMoney } from "@/lib/format";
+
+export const dynamic = "force-dynamic";
 
 function MetricCard(props: {
   label: string;
@@ -21,45 +25,21 @@ function MetricCard(props: {
 }
 
 export default async function HomePage() {
-  const session = await getCurrentSession();
-  const dashboard = session
-    ? await getDashboardSnapshot(session.user_id)
-    : null;
+  const access = await requireBudgetAccess();
+  const dashboard = await getDashboardSnapshot(access.userId);
+
+  if (!dashboard) {
+    return null;
+  }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-10">
-      <section className="rounded-[2rem] border border-ink/10 bg-white/70 p-8 shadow-lg backdrop-blur">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <div className="text-sm uppercase tracking-[0.28em] text-clay">
-              Self-hosted household budgeting
-            </div>
-            <h1 className="mt-3 text-5xl font-semibold tracking-tight text-ink">
-              Local-first budgeting built for shared real-world money.
-            </h1>
-            <p className="mt-4 max-w-xl text-lg leading-8 text-ink/75">
-              The first slice focuses on a server-centered home deployment,
-              currency-separated budgeting, and durable ledger primitives.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Link
-              href="/login"
-              className="rounded-full border border-ink/15 px-5 py-3 text-sm font-medium text-ink transition hover:bg-ink hover:text-paper"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/accounts"
-              className="rounded-full bg-ink px-5 py-3 text-sm font-medium text-paper transition hover:bg-moss"
-            >
-              View accounts
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="mt-8 grid gap-4 md:grid-cols-3">
+    <AppShell
+      title="Overview"
+      description="This is the first real server-backed slice: setup, accounts, category buckets, monthly assignment events, and manual transaction entry."
+      userDisplayName={access.displayName}
+      budgetName={access.budgetName}
+    >
+      <section className="grid gap-4 md:grid-cols-3">
         <MetricCard
           label="Deployment"
           value="Next.js + Postgres"
@@ -77,64 +57,92 @@ export default async function HomePage() {
         />
       </section>
 
-      <section className="mt-10 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+      <section className="mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
         <div className="rounded-[2rem] border border-ink/10 bg-white/70 p-6 shadow-sm">
-          <h2 className="text-2xl font-semibold text-ink">Current scaffold</h2>
+          <h2 className="text-2xl font-semibold text-ink">Current status</h2>
           <div className="mt-4 grid gap-3 text-sm leading-7 text-ink/75">
-            <div>App Router shell with typed server-side modules</div>
-            <div>PostgreSQL schema for users, sessions, budgets, ledger, and imports</div>
-            <div>Starter dashboard query model for balances and ready-to-assign by currency</div>
-            <div>Compose stack with app, database, and rotating backup job</div>
+            <div>Use Accounts to add checking, savings, cash, or credit-style ledgers.</div>
+            <div>Use Categories to create conceptual envelopes with explicit currency buckets.</div>
+            <div>Use Transactions to record income, expenses, and balance adjustments.</div>
+            <div>Budget assignment events are tracked append-only for the current month.</div>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href="/accounts"
+              className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper transition hover:bg-moss"
+            >
+              Add account
+            </Link>
+            <Link
+              href="/categories"
+              className="rounded-full border border-ink/15 px-4 py-2 text-sm font-medium text-ink transition hover:bg-ink hover:text-paper"
+            >
+              Manage categories
+            </Link>
+            <Link
+              href="/transactions"
+              className="rounded-full border border-ink/15 px-4 py-2 text-sm font-medium text-ink transition hover:bg-ink hover:text-paper"
+            >
+              Enter transaction
+            </Link>
           </div>
         </div>
 
         <div className="rounded-[2rem] border border-ink/10 bg-ink p-6 text-paper shadow-sm">
-          <h2 className="text-2xl font-semibold">Status</h2>
-          {dashboard ? (
-            <div className="mt-4 space-y-4">
-              <div>
-                <div className="text-sm uppercase tracking-[0.18em] text-paper/60">
-                  Signed in as
+          <h2 className="text-2xl font-semibold">Ready to assign</h2>
+          <div className="mt-4 space-y-3">
+            {dashboard.readyToAssignByCurrency.length > 0 ? (
+              dashboard.readyToAssignByCurrency.map((item) => (
+                <div
+                  key={item.currencyCode}
+                  className="flex items-center justify-between rounded-2xl bg-white/10 px-4 py-3"
+                >
+                  <span>{item.currencyCode}</span>
+                  <span>{formatSignedMoney(item.amount, item.currencyCode)}</span>
                 </div>
-                <div className="mt-1 text-xl">{dashboard.user.displayName}</div>
+              ))
+            ) : (
+              <div className="text-paper/75">
+                No budget activity yet. Create an account, category bucket, and first transaction.
               </div>
-              <div>
-                <div className="text-sm uppercase tracking-[0.18em] text-paper/60">
-                  Budget
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-8 rounded-[2rem] border border-ink/10 bg-white/75 p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold text-ink">Accounts snapshot</h2>
+          <Link href="/accounts" className="text-sm font-medium text-clay">
+            View all
+          </Link>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {dashboard.accounts.length > 0 ? (
+            dashboard.accounts.map((account) => (
+              <div
+                key={account.id}
+                className="rounded-3xl border border-ink/10 bg-paper/80 p-5"
+              >
+                <div className="text-sm uppercase tracking-[0.18em] text-ink/55">
+                  {account.type}
                 </div>
-                <div className="mt-1 text-xl">{dashboard.budget.name}</div>
+                <div className="mt-2 text-2xl font-semibold text-ink">
+                  {account.name}
+                </div>
+                <div className="mt-1 text-sm text-ink/65">{account.currencyCode}</div>
+                <div className="mt-4 text-lg text-ink">
+                  {formatMoney(account.balance, account.currencyCode)}
+                </div>
               </div>
-              <div>
-                <div className="text-sm uppercase tracking-[0.18em] text-paper/60">
-                  Ready to assign
-                </div>
-                <div className="mt-2 space-y-2">
-                  {dashboard.readyToAssignByCurrency.length > 0 ? (
-                    dashboard.readyToAssignByCurrency.map((item) => (
-                      <div
-                        key={item.currencyCode}
-                        className="flex items-center justify-between rounded-2xl bg-white/10 px-4 py-3"
-                      >
-                        <span>{item.currencyCode}</span>
-                        <span>{item.amount}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-paper/75">
-                      No budget activity yet. Seed data will populate the first view.
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            ))
           ) : (
-            <p className="mt-4 max-w-sm text-sm leading-7 text-paper/75">
-              No active session yet. After seeding the database, sign in with the
-              bootstrap owner account to view the initial dashboard.
-            </p>
+            <div className="rounded-3xl border border-dashed border-ink/15 bg-paper/70 p-5 text-sm text-ink/65">
+              No accounts yet.
+            </div>
           )}
         </div>
       </section>
-    </main>
+    </AppShell>
   );
 }

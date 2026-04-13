@@ -1,6 +1,13 @@
 import { redirect } from "next/navigation";
 import { createSession, getCurrentSession, verifyPassword } from "@/lib/auth";
+import { getBootstrapStatus } from "@/lib/budget";
 import { db } from "@/lib/db";
+
+function redirectTo(path: string): never {
+  redirect(path as never);
+}
+
+export const dynamic = "force-dynamic";
 
 async function signIn(formData: FormData) {
   "use server";
@@ -24,12 +31,12 @@ async function signIn(formData: FormData) {
 
   const user = result.rows[0];
   if (!user) {
-    redirect("/login?error=invalid");
+    redirectTo("/login?error=invalid");
   }
 
   const isValid = await verifyPassword(password, user.password_hash);
   if (!isValid) {
-    redirect("/login?error=invalid");
+    redirectTo("/login?error=invalid");
   }
 
   await createSession({
@@ -37,7 +44,7 @@ async function signIn(formData: FormData) {
     deviceLabel: "browser",
   });
 
-  redirect("/");
+  redirectTo("/");
 }
 
 type LoginPageProps = {
@@ -47,11 +54,18 @@ type LoginPageProps = {
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const session = await getCurrentSession();
+  const [session, bootstrap] = await Promise.all([
+    getCurrentSession(),
+    getBootstrapStatus(),
+  ]);
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
 
+  if (!bootstrap.isBootstrapped) {
+    redirectTo("/setup");
+  }
+
   if (session) {
-    redirect("/");
+    redirectTo("/");
   }
 
   return (
